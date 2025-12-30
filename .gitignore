@@ -214,3 +214,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+ckpts
+output
+data
+notebooks
+physical_ai_av
+transformers

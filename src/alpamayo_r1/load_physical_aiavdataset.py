@@ -68,7 +68,7 @@ def load_physical_aiavdataset(
             - clip_id: The clip ID
     """
     if avdi is None:
-        avdi = physical_ai_av.PhysicalAIAVDatasetInterface()
+        avdi = physical_ai_av.OfflinePhysicalAIAVDatasetInterface(data_dir="data/PhysicalAI-Autonomous-Vehicles")
 
     if camera_features is None:
         camera_features = [
@@ -88,12 +88,14 @@ def load_physical_aiavdataset(
         "camera_front_tele_30fov": 6,
     }
 
-    # Load egomotion data
+    # Load egomotion data, 前20s（大概）是采样率100HZ，超过20s的采样率在变化，很奇怪，可能只用前20s？
     egomotion = avdi.get_clip_feature(
         clip_id,
         avdi.features.LABELS.EGOMOTION,
-        maybe_stream=maybe_stream,
+        maybe_stream=False
     )
+
+
 
     history_time_range_us = num_history_steps * time_step * 1_000_000
     if t0_us <= history_time_range_us:
@@ -136,7 +138,7 @@ def load_physical_aiavdataset(
     t0_rot = spt.Rotation.from_quat(t0_quat)
     t0_rot_inv = t0_rot.inv()
 
-    # Transform history positions to local frame
+    # Transform history positions to local frame  # t0_rot_inv is world2ego_r, 后边是世界坐标系原点移动到自车位置后的历史坐标点
     ego_history_xyz_local = t0_rot_inv.apply(ego_history_xyz - t0_xyz)
 
     # Transform future positions to local frame

@@ -22,7 +22,7 @@ import collections.abc
 
 MIN_PIXELS = 163840
 MAX_PIXELS = 196608
-BASE_PROCESSOR_NAME = "Qwen/Qwen3-VL-2B-Instruct"
+BASE_PROCESSOR_NAME = "ckpts/Qwen3-VL-8B-Instruct-config"
 
 
 def create_message(frames: torch.Tensor):
