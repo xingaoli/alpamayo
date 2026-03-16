@@ -21,7 +21,7 @@ for chunk_id in chunk_id_list:
     # egomotion data
     ds.download_chunk_features(
         int(chunk_id),
-        features=ds.features.LABELS.EGOMOTION
+        features=ds.features.LABELS.ALL
     )
 
     ds.download_chunk_features(

@@ -5,7 +5,7 @@ MAX_RETRIES=9999
 RETRY_COUNT=0
 
 # 下载命令
-DOWNLOAD_CMD="python tools/download_data.py --chunk_id 0,8 --local_dir data/PhysicalAI-Autonomous-Vehicles"
+DOWNLOAD_CMD="python tools/download_data.py --chunk_id 0 --local_dir data/PhysicalAI-Autonomous-Vehicles-mini"
 
 # 循环下载，直到成功或达到最大重试次数
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
