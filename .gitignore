@@ -215,9 +215,12 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# venv
+ar1_venv
+
 ckpts
 output
 data
-notebooks
+notebooks_local
 physical_ai_av
 transformers
