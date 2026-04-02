@@ -7,12 +7,6 @@ resolution-markers = [
     "sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
-[manifest]
-members = [
-    "alpamayo-r1",
-    "physical-ai-av",
-]
-
 [[package]]
 name = "accelerate"
 version = "1.13.0"
@@ -139,12 +133,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "physical-ai-av", specifier = ">=0.2.0" },
     { name = "pillow", specifier = ">=12.0.0" },
-<<<<<<< HEAD
     { name = "rich", specifier = ">=14.3.3" },
-=======
-    { name = "pyquaternion", specifier = ">=0.9.9" },
-    { name = "seaborn", specifier = ">=0.13.2" },
->>>>>>> f73f652 (finish infer reproduction and vis)
     { name = "torch", specifier = "==2.8.0" },
     { name = "torchmetrics", specifier = "==1.8.2" },
     { name = "torchvision", specifier = ">=0.23.0" },
@@ -367,15 +356,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7b/2b/2b6435f76bfeb6bbf055596976da087377ede68df465419d192acf00c437/cffi-2.0.0-cp312-cp312-win32.whl", hash = "sha256:da902562c3e9c550df360bfa53c035b2f241fed6d9aef119048073680ace4a18", size = 172932, upload-time = "2025-09-08T23:22:57.188Z" },
     { url = "https://files.pythonhosted.org/packages/f8/ed/13bd4418627013bec4ed6e54283b1959cf6db888048c7cf4b4c3b5b36002/cffi-2.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:da68248800ad6320861f129cd9c1bf96ca849a2771a59e0344e88681905916f5", size = 183557, upload-time = "2025-09-08T23:22:58.351Z" },
     { url = "https://files.pythonhosted.org/packages/95/31/9f7f93ad2f8eff1dbc1c3656d7ca5bfd8fb52c9d786b4dcf19b2d02217fa/cffi-2.0.0-cp312-cp312-win_arm64.whl", hash = "sha256:4671d9dd5ec934cb9a73e7ee9676f9362aba54f7f34910956b84d727b0d73fb6", size = 177762, upload-time = "2025-09-08T23:22:59.668Z" },
-]
-
-[[package]]
-name = "cfgv"
-version = "3.5.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4e/b5/721b8799b04bf9afe054a3899c6cf4e880fcf8563cc71c15610242490a0c/cfgv-3.5.0.tar.gz", hash = "sha256:d5b1034354820651caa73ede66a6294d6e95c1b00acc5e9b098e917404669132", size = 7334, upload-time = "2025-11-19T20:55:51.612Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/3c/33bac158f8ab7f89b2e59426d5fe2e4f63f7ed25df84c036890172b412b5/cfgv-3.5.0-py2.py3-none-any.whl", hash = "sha256:a8dc6b26ad22ff227d2634a65cb388215ce6cc96bbcc5cfde7641ae87e8dacc0", size = 7445, upload-time = "2025-11-19T20:55:50.744Z" },
 ]
 
 [[package]]
@@ -611,6 +591,7 @@ wheels = [
 
 [[package]]
 <<<<<<< HEAD
+<<<<<<< HEAD
 name = "deepspeed"
 version = "0.18.2"
 source = { registry = "https://pypi.org/simple" }
@@ -718,6 +699,8 @@ wheels = [
 ]
 
 [[package]]
+=======
+>>>>>>> 81eb12b (modify dependency)
 name = "einops"
 version = "0.8.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1097,15 +1080,6 @@ wheels = [
 ]
 
 [[package]]
-name = "identify"
-version = "2.6.18"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/46/c4/7fb4db12296cdb11893d61c92048fe617ee853f8523b9b296ac03b43757e/identify-2.6.18.tar.gz", hash = "sha256:873ac56a5e3fd63e7438a7ecbc4d91aca692eb3fefa4534db2b7913f3fc352fd", size = 99580, upload-time = "2026-03-15T18:39:50.319Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/33/92ef41c6fad0233e41d3d84ba8e8ad18d1780f1e5d99b3c683e6d7f98b63/identify-2.6.18-py2.py3-none-any.whl", hash = "sha256:8db9d3c8ea9079db92cafb0ebf97abdc09d52e97f4dcf773a2e694048b7cd737", size = 99394, upload-time = "2026-03-15T18:39:48.915Z" },
-]
-
-[[package]]
 name = "idna"
 version = "3.11"
 source = { registry = "https://pypi.org/simple" }
@@ -1115,6 +1089,7 @@ wheels = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 <<<<<<< HEAD
 name = "importlib-metadata"
 version = "9.0.0"
@@ -1145,6 +1120,8 @@ wheels = [
 ]
 
 [[package]]
+=======
+>>>>>>> 81eb12b (modify dependency)
 name = "ipykernel"
 version = "7.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1833,15 +1810,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nodeenv"
-version = "1.10.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/24/bf/d1bda4f6168e0b2e9e5958945e01910052158313224ada5ce1fb2e1113b8/nodeenv-1.10.0.tar.gz", hash = "sha256:996c191ad80897d076bdfba80a41994c2b47c68e224c542b48feba42ba00f8bb", size = 55611, upload-time = "2025-12-20T14:08:54.006Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/b2/d0896bdcdc8d28a7fc5717c305f1a861c26e18c05047949fb371034d98bd/nodeenv-1.10.0-py2.py3-none-any.whl", hash = "sha256:5bb13e3eed2923615535339b3c620e76779af4cb4c6a90deccc9e36b274d3827", size = 23438, upload-time = "2025-12-20T14:08:52.782Z" },
-]
-
-[[package]]
 name = "numpy"
 version = "2.2.6"
 source = { registry = "https://pypi.org/simple" }
@@ -2010,6 +1978,7 @@ wheels = [
 
 [[package]]
 <<<<<<< HEAD
+<<<<<<< HEAD
 name = "openai"
 version = "2.29.0"
 =======
@@ -2031,6 +2000,8 @@ wheels = [
 ]
 
 [[package]]
+=======
+>>>>>>> 81eb12b (modify dependency)
 name = "packaging"
 version = "25.0"
 >>>>>>> c40b6f6 (update depency physical_ai_av)
@@ -2233,14 +2204,16 @@ wheels = [
 name = "physical-ai-av"
 version = "0.2.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
 source = { registry = "https://pypi.org/simple" }
 =======
 source = { editable = "physical_ai_av" }
 >>>>>>> c40b6f6 (update depency physical_ai_av)
+=======
+source = { registry = "https://pypi.org/simple" }
+>>>>>>> 81eb12b (modify dependency)
 dependencies = [
     { name = "av" },
-    { name = "dotenv" },
-    { name = "einops" },
     { name = "huggingface-hub" },
     { name = "numpy" },
     { name = "pandas" },
@@ -2248,6 +2221,7 @@ dependencies = [
     { name = "scipy" },
     { name = "tqdm" },
 ]
+<<<<<<< HEAD
 <<<<<<< HEAD
 sdist = { url = "https://files.pythonhosted.org/packages/8d/d6/1d413f9a3822c3b8f882d350eee7a1c76d7a0c512a076a7d354c3b5655cc/physical_ai_av-0.2.0.tar.gz", hash = "sha256:cb0b42ef6070f5de36961136ac72f59ca6f1e27a2df9f2ea6d1179abaf2d0619", size = 15800, upload-time = "2026-03-14T02:04:06.179Z" }
 wheels = [
@@ -2292,6 +2266,11 @@ dev = [
     { name = "pre-commit", specifier = ">=4.4.0" },
     { name = "pytest", specifier = ">=9.0.1" },
 >>>>>>> c40b6f6 (update depency physical_ai_av)
+=======
+sdist = { url = "https://files.pythonhosted.org/packages/8d/d6/1d413f9a3822c3b8f882d350eee7a1c76d7a0c512a076a7d354c3b5655cc/physical_ai_av-0.2.0.tar.gz", hash = "sha256:cb0b42ef6070f5de36961136ac72f59ca6f1e27a2df9f2ea6d1179abaf2d0619", size = 15800, upload-time = "2026-03-14T02:04:06.179Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/64/93/6596736dbb8938465f480a4603a1c3e803185a4a692e782d9c311859c7cc/physical_ai_av-0.2.0-py3-none-any.whl", hash = "sha256:f9167b425a00b150d675f265116ab75e451d6532460a4d43a52edf5b2600c696", size = 21329, upload-time = "2026-03-14T02:04:07.108Z" },
+>>>>>>> 81eb12b (modify dependency)
 ]
 
 [[package]]
@@ -2342,31 +2321,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/69/6d/24d53033cf93826aa7857699a4450c1c67e5b9c710e925b1ed2b320c04df/prometheus_fastapi_instrumentator-7.1.0.tar.gz", hash = "sha256:be7cd61eeea4e5912aeccb4261c6631b3f227d8924542d79eaf5af3f439cbe5e", size = 20220, upload-time = "2025-03-19T19:35:05.351Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/27/72/0824c18f3bc75810f55dacc2dd933f6ec829771180245ae3cc976195dec0/prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl", hash = "sha256:978130f3c0bb7b8ebcc90d35516a6fe13e02d2eb358c8f83887cdef7020c31e9", size = 19296, upload-time = "2025-03-19T19:35:04.323Z" },
-]
-
-[[package]]
-name = "pluggy"
-version = "1.6.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
-]
-
-[[package]]
-name = "pre-commit"
-version = "4.5.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cfgv" },
-    { name = "identify" },
-    { name = "nodeenv" },
-    { name = "pyyaml" },
-    { name = "virtualenv" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/40/f1/6d86a29246dfd2e9b6237f0b5823717f60cad94d47ddc26afa916d21f525/pre_commit-4.5.1.tar.gz", hash = "sha256:eb545fcff725875197837263e977ea257a402056661f09dae08e4b149b030a61", size = 198232, upload-time = "2025-12-16T21:14:33.552Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5d/19/fd3ef348460c80af7bb4669ea7926651d1f95c23ff2df18b9d24bab4f3fa/pre_commit-4.5.1-py2.py3-none-any.whl", hash = "sha256:3b3afd891e97337708c1674210f8eba659b52a38ea5f822ff142d10786221f77", size = 226437, upload-time = "2025-12-16T21:14:32.409Z" },
 ]
 
 [[package]]
@@ -2694,22 +2648,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pytest"
-version = "9.0.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "iniconfig" },
-    { name = "packaging" },
-    { name = "pluggy" },
-    { name = "pygments" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/db/7ef3487e0fb0049ddb5ce41d3a49c235bf9ad299b6a25d5780a89f19230f/pytest-9.0.2.tar.gz", hash = "sha256:75186651a92bd89611d1d9fc20f0b4345fd827c41ccd5c299a868a05d70edf11", size = 1568901, upload-time = "2025-12-06T21:30:51.014Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3b/ab/b3226f0bd7cdcf710fbede2b3548584366da3b19b5021e74f5bde2a8fa3f/pytest-9.0.2-py3-none-any.whl", hash = "sha256:711ffd45bf766d5264d487b917733b453d917afd2b0ad65223959f59089f875b", size = 374801, upload-time = "2025-12-06T21:30:49.154Z" },
-]
-
-[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -2722,6 +2660,7 @@ wheels = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 <<<<<<< HEAD
 name = "python-dotenv"
 version = "1.2.2"
@@ -2748,6 +2687,8 @@ wheels = [
 ]
 
 [[package]]
+=======
+>>>>>>> 81eb12b (modify dependency)
 name = "pytz"
 version = "2025.2"
 >>>>>>> c40b6f6 (update depency physical_ai_av)
@@ -3674,21 +3615,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0a/bf/95895e78dd75efe9a7f31733607f384b42eb5feb54bd2eb6ed57cc2e94f4/watchfiles-1.1.1-cp312-cp312-win32.whl", hash = "sha256:859e43a1951717cc8de7f4c77674a6d389b106361585951d9e69572823f311d9", size = 272042, upload-time = "2025-10-14T15:04:59.046Z" },
     { url = "https://files.pythonhosted.org/packages/87/0a/90eb755f568de2688cb220171c4191df932232c20946966c27a59c400850/watchfiles-1.1.1-cp312-cp312-win_amd64.whl", hash = "sha256:91d4c9a823a8c987cce8fa2690923b069966dabb196dd8d137ea2cede885fde9", size = 288410, upload-time = "2025-10-14T15:05:00.081Z" },
     { url = "https://files.pythonhosted.org/packages/36/76/f322701530586922fbd6723c4f91ace21364924822a8772c549483abed13/watchfiles-1.1.1-cp312-cp312-win_arm64.whl", hash = "sha256:a625815d4a2bdca61953dbba5a39d60164451ef34c88d751f6c368c3ea73d404", size = 278209, upload-time = "2025-10-14T15:05:01.168Z" },
-]
-
-[[package]]
-name = "virtualenv"
-version = "21.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "distlib" },
-    { name = "filelock" },
-    { name = "platformdirs" },
-    { name = "python-discovery" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/aa/92/58199fe10049f9703c2666e809c4f686c54ef0a68b0f6afccf518c0b1eb9/virtualenv-21.2.0.tar.gz", hash = "sha256:1720dc3a62ef5b443092e3f499228599045d7fea4c79199770499df8becf9098", size = 5840618, upload-time = "2026-03-09T17:24:38.013Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/59/7d02447a55b2e55755011a647479041bc92a82e143f96a8195cb33bd0a1c/virtualenv-21.2.0-py3-none-any.whl", hash = "sha256:1bd755b504931164a5a496d217c014d098426cddc79363ad66ac78125f9d908f", size = 5825084, upload-time = "2026-03-09T17:24:35.378Z" },
 ]
 
 [[package]]
