@@ -16,6 +16,7 @@
 """Base Reasoning VLA model implementation for Alpamayo R1 release."""
 
 import logging
+import os
 from typing import Any
 
 import einops
@@ -204,7 +205,7 @@ class ReasoningVLAConfig(PretrainedConfig):
 
     def __init__(
         self,
-        vlm_name_or_path: str = "ckpts/Qwen3-VL-8B-Instruct-config",
+        vlm_name_or_path: str | None = None,
         vlm_backend: str = "qwenvl3",
         traj_tokenizer_cfg: dict[str, Any] | None = None,
         hist_traj_tokenizer_cfg: dict[str, Any] | None = None,
@@ -220,6 +221,10 @@ class ReasoningVLAConfig(PretrainedConfig):
     ) -> None:
         super().__init__(**kwargs)
 
+        # 使用环境变量或默认值
+        if vlm_name_or_path is None:
+            vlm_name_or_path = os.environ.get("VLM_MODEL_PATH", "ckpts/Qwen3-VL-8B-Instruct-config")
+        
         self.vlm_name_or_path = vlm_name_or_path
         self.vlm_backend = vlm_backend.lower()
         self.model_dtype = model_dtype

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from transformers import AutoProcessor, AutoTokenizer
 
 from typing import Any
@@ -22,7 +24,9 @@ import collections.abc
 
 MIN_PIXELS = 163840
 MAX_PIXELS = 196608
-BASE_PROCESSOR_NAME = "ckpts/Qwen3-VL-8B-Instruct-config"
+BASE_PROCESSOR_NAME = os.environ.get(
+    "QWEN3_VL_PROCESSOR", "ckpts/Qwen3-VL-8B-Instruct-config"
+)
 
 
 def create_message(frames: torch.Tensor):

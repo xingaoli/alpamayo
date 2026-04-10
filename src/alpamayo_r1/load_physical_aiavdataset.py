@@ -15,6 +15,7 @@
 
 """Load data from physical_ai_av.PhysicalAIAVDatasetInterface for model inference."""
 
+import os
 from typing import Any
 
 import numpy as np
@@ -68,7 +69,8 @@ def load_physical_aiavdataset(
             - clip_id: The clip ID
     """
     if avdi is None:
-        avdi = physical_ai_av.OfflinePhysicalAIAVDatasetInterface(data_dir="data/PhysicalAI-Autonomous-Vehicles")
+        data_dir = os.environ.get("DATA_DIR", "data/PhysicalAI-Autonomous-Vehicles")
+        avdi = physical_ai_av.OfflinePhysicalAIAVDatasetInterface(data_dir=data_dir)
 
     if camera_features is None:
         camera_features = [
