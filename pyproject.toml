@@ -52,14 +52,11 @@ dev = [
 [tool.uv]
 no-build-isolation-package = ["flash-attn"]
 
-[tool.uv.sources]
-cosmos-rl = { git = "https://github.com/nvidia-cosmos/cosmos-rl.git", rev = "747d1bd" }
 [tool.uv.workspace]
-members = [
-    "physical_ai_av",
-]
+members = ["physical_ai_av"]
 
 [tool.uv.sources]
+cosmos-rl = { path = "source_packages/cosmos-rl" }
 physical-ai-av = { workspace = true, editable = true }
 
 [tool.ruff]
