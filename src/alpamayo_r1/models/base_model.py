@@ -223,7 +223,7 @@ class ReasoningVLAConfig(PretrainedConfig):
 
         # 使用环境变量或默认值
         if vlm_name_or_path is None:
-            vlm_name_or_path = os.environ.get("VLM_MODEL_PATH", "ckpts/Qwen3-VL-8B-Instruct-config")
+            vlm_name_or_path = os.environ.get("ALPAMAYO_VLM_PROCESSOR_CKPT", "ckpts/Qwen3-VL-8B-Instruct-config")
         
         self.vlm_name_or_path = vlm_name_or_path
         self.vlm_backend = vlm_backend.lower()

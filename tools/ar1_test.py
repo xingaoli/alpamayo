@@ -9,7 +9,7 @@ import pandas as pd
 import torch
 from alpamayo_r1.models.alpamayo_r1 import AlpamayoR1
 from alpamayo_r1.config import AlpamayoR1Config
-from alpamayo_r1.load_physical_aiavdataset import load_physical_aiavdataset
+from alpamayo_r1.load_physical_aiavdataset import load_physical_aiavdataset_local
 from alpamayo_r1 import helper
 
 import huggingface_hub
@@ -20,7 +20,7 @@ model = AlpamayoR1.from_pretrained("ckpts/Alpamayo-R1-10B/", dtype=torch.bfloat1
 model.eval()
 processor = helper.get_processor(model.tokenizer)
 clip_id = "5c8a7587-d850-474c-b297-7a633d0538d1"
-data = load_physical_aiavdataset(clip_id)
+data = load_physical_aiavdataset_local(clip_id)
 
 messages = helper.create_message(data["image_frames"].flatten(0, 1))
 
