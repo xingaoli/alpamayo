@@ -14,6 +14,11 @@ data:
     use_default_keyframe: true
     vla_preprocess_args:
       generation_mode: false
+    # If using PAIMultiSegmentDataset, uncomment below:
+    # _target_: alpamayo_r1.data.pai_multi_segment.PAIMultiSegmentDataset
+    # num_segments: 20
+    # segment_start_us: 2000000  # 2.0s
+    # segment_step_us: 500000    # 0.5s
   val_dataset:
     _recursive_: false
     _target_: alpamayo_r1.data.pai.PAIDataset
@@ -22,6 +27,11 @@ data:
     use_default_keyframe: true
     vla_preprocess_args:
       generation_mode: true
+    # If using PAIMultiSegmentDataset, uncomment below:
+    # _target_: alpamayo_r1.data.pai_multi_segment.PAIMultiSegmentDataset
+    # num_segments: 20
+    # segment_start_us: 2000000
+    # segment_step_us: 500000
 paths:
   output_dir: ./output_sft
 callbacks: {}

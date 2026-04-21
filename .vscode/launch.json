@@ -18,30 +18,48 @@
             "justMyCode": false
         },
         {
-            "name": "Python: debug_download_data",
+            "name": "Python: debug_data_pipeline",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/tools/download_data.py",
-            "args": [
-            ],
+            "program": "${workspaceFolder}/tools/debug_data_pipeline.py",
+            "args": [],
+            "console": "integratedTerminal",
             "env": {
-                "CUDA_VISIBLE_DEVICES": "0",      // 指定GPU
-                "TORCH_DISTRIBUTED_DEBUG": "DETAIL"
+                "CUDA_VISIBLE_DEVICES": "0"
             },
             "justMyCode": false
         },
         {
-            "name": "Python: debug_format_b2d_gt_infos_4vis",
+            "name": "Python: eval_checkpoint",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/analysis_tools/format_b2d_gt_infos_4vis.py",
-            "args": [
-                "--gt_path=output/format_data/v1/ParkedObstacle_Town10HD_Route371_Weather7/b2d_infos_val.pkl",
-                "--save_path=output/format_data/v1/ParkedObstacle_Town10HD_Route371_Weather7/b2d_infos_custom.pkl"
-            ],
+            "program": "${workspaceFolder}/tools/eval_checkpoint.py",
+            "args": [],
+            "console": "integratedTerminal",
             "env": {
-                "CUDA_VISIBLE_DEVICES": "0",      // 指定GPU
-                "TORCH_DISTRIBUTED_DEBUG": "DETAIL"
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "justMyCode": false
+        },
+        {
+            "name": "SFT Stage1: torchrun 2GPU",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "torch.distributed.run",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--nproc_per_node=2",
+                "finetune/sft/train_hf.py",
+                "--config-path=${workspaceFolder}/finetune/sft/configs",
+                "--config-name=sft_stage1_local"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "CUDA_VISIBLE_DEVICES": "0,1",
+                "TORCH_DISTRIBUTED_DEBUG": "DETAIL",
+                "HYDRA_FULL_ERROR": "1",
+                "NCCL_DEBUG": "INFO"
             },
             "justMyCode": false
         },

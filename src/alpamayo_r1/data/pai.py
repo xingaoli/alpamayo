@@ -17,7 +17,7 @@ from typing import Any
 
 import torch
 from alpamayo_r1.data.pai_utils import PhysicalAIAVDatasetLocalInterface
-from alpamayo_r1.load_physical_aiavdataset import load_physical_aiavdataset
+from alpamayo_r1.load_physical_aiavdataset_local import load_physical_aiavdataset_local
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 from torch.utils.data import Dataset
@@ -103,10 +103,10 @@ class PAIDataset(Dataset):
             else self.avdi.get_clip_key_frame(clip_id)
         )
 
-        sample_data = load_physical_aiavdataset(
+        sample_data = load_physical_aiavdataset_local(
             clip_id,
             t0_us=t0_us,
-            avdi=self.avdi,
+            # avdi=self.avdi,
             num_history_steps=self.num_history_steps,
             num_future_steps=self.num_future_steps,
             time_step=self.time_step,
@@ -116,9 +116,6 @@ class PAIDataset(Dataset):
         for key in sample_data.keys():
             if key.startswith("ego_"):
                 sample_data[key] = sample_data[key].squeeze(0)
-
-        if self.vla_preprocess_func is not None:
-            sample_data["tokenized_data"] = self.vla_preprocess_func(data=sample_data)
 
         if self.include_extr_intr:
             sample_data["extr"] = self.avdi.get_clip_feature(clip_id, "sensor_extrinsics")

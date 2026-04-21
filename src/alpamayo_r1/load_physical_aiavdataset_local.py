@@ -59,12 +59,19 @@ def load_physical_aiavdataset_local(
     chunk_id = clip_index.loc[clip_id, "chunk"]
 
     if camera_features is None:
-        camera_features = [
-            "camera_cross_left_120fov",
-            "camera_front_wide_120fov",
-            "camera_cross_right_120fov",
-            "camera_front_tele_30fov",
-        ]
+        camera_mode = os.environ.get("ALPAMAYO_CAMERA_MODE", "4cam")
+        if camera_mode == "2cam":
+            camera_features = [
+                "camera_front_wide_120fov",
+                "camera_front_tele_30fov",
+            ]
+        else:
+            camera_features = [
+                "camera_cross_left_120fov",
+                "camera_front_wide_120fov",
+                "camera_cross_right_120fov",
+                "camera_front_tele_30fov",
+            ]
 
     camera_name_to_index = {
         "camera_cross_left_120fov": 0,

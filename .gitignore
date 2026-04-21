@@ -220,8 +220,16 @@ ar1_venv
 
 ckpts
 output
-data
+outputs
+/data
+!src/alpamayo_r1/data/
 notebooks_local
 physical_ai_av
 transformers
 source_packages
+
+# local SFT configs
+finetune/sft/configs/sft_base_local.yaml
+finetune/sft/configs/sft_stage1_local.yaml
+finetune/sft/configs/models/ar1_base_local.yaml
+finetune/sft/configs/wandb/local.yaml

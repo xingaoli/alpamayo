@@ -383,7 +383,11 @@ class ReasoningVLA(PreTrainedModel, TrajectoryFusionMixin):
         self.original_vocab_size = vlm_config.text_config.vocab_size
         vlm_config.text_config.vocab_size = config.vocab_size
         vlm_config.vocab_size = config.vocab_size
+        # Skip slow random initialization — weights will be loaded from checkpoint later
+        _original_init_weights = Qwen3VLForConditionalGeneration.init_weights
+        Qwen3VLForConditionalGeneration.init_weights = lambda self: None
         self.vlm = Qwen3VLForConditionalGeneration(vlm_config)
+        Qwen3VLForConditionalGeneration.init_weights = _original_init_weights
 
     def _initialize_trajectory_tokenizers(
         self, config: ReasoningVLAConfig, pretrained_modules: dict[str, Any]
