@@ -95,6 +95,14 @@ def load_alpamayo1_vlm(checkpoint_path: str, model: Any):
             for key in keys:
                 if key in shard_sd:
                     vlm_state_dict[key] = shard_sd[key]
+    else:
+        # Single safetensors file (no index)
+        safetensors_files = sorted(checkpoint_dir.glob("model*.safetensors"))
+        for safetensors_file in safetensors_files:
+            shard_sd = load_safetensors_file(str(safetensors_file), device="cpu")
+            for key in shard_sd:
+                if key.startswith("vlm."):
+                    vlm_state_dict[key] = shard_sd[key]
 
     if not vlm_state_dict:
         raise ValueError(f"No vlm.* tensors found in checkpoint: {checkpoint_dir}")
@@ -232,6 +240,96 @@ class TrainableReasoningVLA(ReasoningVLA, TrajectoryFusionWithFutureMixin):
 
         model = cls(config, pretrained_modules=pretrained_modules or None)
         model = load_alpamayo1_vlm(checkpoint_path, model)
+
+        return model
+
+    @classmethod
+    def from_qwen3vl_checkpoint(
+        cls,
+        vlm_name_or_path: str,
+        traj_vocab_size: int = 768,
+        tokens_per_future_traj: int = 64,
+        tokens_per_history_traj: int = 16,
+        traj_tokenizer_cfg: dict[str, Any] | None = None,
+        hist_traj_tokenizer_cfg: dict[str, Any] | None = None,
+        model_dtype: str = "bfloat16",
+        attn_implementation: str = "flash_attention_2",
+        min_pixels: int | None = None,
+        max_pixels: int | None = None,
+        add_special_tokens: bool = True,
+        **kwargs: Any,
+    ) -> "TrainableReasoningVLA":
+        """Load a fresh Qwen3-VL checkpoint for Stage 1 training.
+
+        Unlike ``from_alpamayo_checkpoint`` which loads fine-tuned VLM weights from an
+        existing Alpamayo checkpoint, this loads the full base VLM from HuggingFace,
+        resizes token embeddings for trajectory tokens, and instantiates the trajectory
+        tokenizer -- providing a clean starting point for Stage 1 SFT.
+
+        Args:
+            vlm_name_or_path: HuggingFace path or local path to a Qwen3-VL model.
+            traj_vocab_size: Number of discrete trajectory tokens to add.
+            tokens_per_future_traj: Number of tokens per future trajectory.
+            tokens_per_history_traj: Number of tokens per history trajectory.
+            traj_tokenizer_cfg: Hydra config dict for the future trajectory tokenizer.
+            hist_traj_tokenizer_cfg: Hydra config dict for the history trajectory tokenizer.
+            model_dtype: Data type for the VLM.
+            attn_implementation: Attention implementation (e.g. "flash_attention_2").
+            min_pixels: Minimum pixels for image preprocessing.
+            max_pixels: Maximum pixels for image preprocessing.
+            add_special_tokens: Whether to add all special tokens (vs. only traj tokens).
+
+        Returns:
+            TrainableReasoningVLA model ready for Stage 1 SFT training.
+        """
+        from alpamayo_r1.models.base_model import ReasoningVLAConfig
+        from transformers import Qwen3VLForConditionalGeneration
+
+        # 1. Build ReasoningVLAConfig from scratch
+        config = ReasoningVLAConfig(
+            vlm_name_or_path=vlm_name_or_path,
+            vlm_backend="qwenvl3",
+            traj_vocab_size=traj_vocab_size,
+            tokens_per_future_traj=tokens_per_future_traj,
+            tokens_per_history_traj=tokens_per_history_traj,
+            traj_tokenizer_cfg=traj_tokenizer_cfg,
+            hist_traj_tokenizer_cfg=hist_traj_tokenizer_cfg,
+            model_dtype=model_dtype,
+            attn_implementation=attn_implementation,
+            min_pixels=min_pixels,
+            max_pixels=max_pixels,
+            add_special_tokens=add_special_tokens,
+        )
+
+        # 2. Load VLM from HuggingFace and resize embeddings
+        pretrained_modules = {}
+        vlm = Qwen3VLForConditionalGeneration.from_pretrained(
+            config.vlm_name_or_path,
+            torch_dtype=getattr(torch, config.model_dtype),
+            attn_implementation=config.attn_implementation,
+        )
+        original_vocab_size = vlm.config.text_config.vocab_size
+        vlm.resize_token_embeddings(config.vocab_size)
+        vlm.config.text_config.vocab_size = config.vocab_size
+        vlm.config.vocab_size = config.vocab_size
+        pretrained_modules["vlm"] = vlm
+
+        # 3. Instantiate trajectory tokenizer if config provided
+        if config.traj_tokenizer_cfg is not None:
+            traj_tokenizer = instantiate(config.traj_tokenizer_cfg)
+            pretrained_modules["traj_tokenizer"] = traj_tokenizer
+
+        # 4. Create model
+        model = cls(
+            config,
+            pretrained_modules=pretrained_modules or None,
+            original_vocab_size=original_vocab_size,
+        )
+
+        logger.info(
+            f"Loaded fresh VLM from {vlm_name_or_path} "
+            f"(original_vocab_size={original_vocab_size}, new_vocab_size={config.vocab_size})",
+        )
 
         return model
 

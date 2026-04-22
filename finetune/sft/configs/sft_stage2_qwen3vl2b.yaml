@@ -1,0 +1,13 @@
+defaults:
+  - sft_base_local
+  - /models/qwen3vl2b_expert@model
+  - _self_
+
+paths:
+  output_dir: outputs/output_stage2_2b
+trainer:
+  gradient_checkpointing: false
+  deepspeed: null
+  ddp_find_unused_parameters: true
+evaluate:
+  eval_ckpt: null

@@ -375,6 +375,8 @@ class ReasoningVLA(PreTrainedModel, TrajectoryFusionMixin):
         Qwen3-VL uses Qwen3VLForConditionalGeneration from transformers.
         See: https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct
         """
+        from transformers.modeling_utils import no_init_weights
+
         vlm_config = Qwen3VLConfig.from_pretrained(
             config.vlm_name_or_path,
             dtype=config.model_dtype,
@@ -383,12 +385,12 @@ class ReasoningVLA(PreTrainedModel, TrajectoryFusionMixin):
         self.original_vocab_size = vlm_config.text_config.vocab_size
         vlm_config.text_config.vocab_size = config.vocab_size
         vlm_config.vocab_size = config.vocab_size
-        # Skip slow random initialization — weights will be loaded from checkpoint later
-        _original_init_weights = Qwen3VLForConditionalGeneration.init_weights
-        Qwen3VLForConditionalGeneration.init_weights = lambda self: None
-        self.vlm = Qwen3VLForConditionalGeneration(vlm_config)
-        Qwen3VLForConditionalGeneration.init_weights = _original_init_weights
-
+        # Skip slow random initialization — weights will be loaded from checkpoint later.
+        # no_init_weights() overrides nn.Module.reset_parameters at the PyTorch level,
+        # which is deeper than the HF init_weights override and truly skips all parameter
+        # initialization (only shape/dtype are allocated).
+        with no_init_weights():
+            self.vlm = Qwen3VLForConditionalGeneration(vlm_config)
     def _initialize_trajectory_tokenizers(
         self, config: ReasoningVLAConfig, pretrained_modules: dict[str, Any]
     ) -> None:
