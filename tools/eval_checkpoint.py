@@ -130,7 +130,7 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate Stage 1/2 checkpoint")
     parser.add_argument("--stage", type=int, choices=[1, 2], required=True, help="1 or 2")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to checkpoint directory")
-    parser.add_argument("--data_dir", type=str, default="data/PhysicalAI-Autonomous-Vehicles")
+    parser.add_argument("--data_dir", type=str, default=os.getenv("ALPAMAYO_DATA_DIR", "data/PhysicalAI-Autonomous-Vehicles"))
     parser.add_argument("--eval_chunks", type=str, default="48-50")
     parser.add_argument("--vlm", type=str, default="ckpts/Qwen3-VL-8B-Instruct-config")
     parser.add_argument("--num_traj_samples", type=int, default=6)
@@ -138,6 +138,8 @@ def main():
     parser.add_argument("--top_p", type=float, default=0.98)
     parser.add_argument("--temperature", type=float, default=0.6)
     parser.add_argument("--max_eval_samples", type=int, default=-1, help="-1 for all")
+    parser.add_argument("--batch_size", type=int, default=1)
+    parser.add_argument("--num_workers", type=int, default=2)
     args = parser.parse_args()
 
     # --- Load model ---
@@ -186,7 +188,7 @@ def main():
 
     # --- Setup distributed sampler ---
     sampler = DistributedSampler(eval_dataset, num_replicas=world_size, rank=rank, shuffle=False)
-    dataloader = DataLoader(eval_dataset, batch_size=1, sampler=sampler, collate_fn=collate_fn, num_workers=2)
+    dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, sampler=sampler, collate_fn=collate_fn, num_workers=args.num_workers)
 
     num_total = len(dataloader)
 
