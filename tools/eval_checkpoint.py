@@ -162,16 +162,18 @@ def main():
     eval_dataset = instantiate(
         {
             "_recursive_": False,
-            "_target_": "alpamayo_r1.data.pai.PAIDataset",
+            "_target_": "alpamayo_r1.data.pai_multi_segment.PAIMultiSegmentDataset",
             "local_dir": args.data_dir,
             "chunk_ids": args.eval_chunks,
-            "use_default_keyframe": True,
+            "num_segments": 20,
+            "segment_start_us": 2_000_000,
+            "segment_step_us": 500_000,
             "vla_preprocess_args": vla_preprocess_args,
         },
         model_config=model_config,
     )
     if is_main:
-        print(f"Eval dataset size: {len(eval_dataset)} clips")
+        print(f"Eval dataset size: {len(eval_dataset)} segments")
 
     # --- Load collate_fn ---
     collate_fn = instantiate(
