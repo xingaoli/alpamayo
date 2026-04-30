@@ -357,7 +357,7 @@ def main():
                         help="OpenAI API Key (default EMPTY)")
     parser.add_argument("--base-url", type=str, default="http://0.0.0.0:8000/v1",
                         help="OpenAI API Base URL")
-    parser.add_argument("--model", type=str, default="ckpts/Qwen3.5-9B",
+    parser.add_argument("--model", type=str, default="ckpts/Qwen3.6-27B-FP8",
                         help="Model name to use")
     parser.add_argument("--dry-run", action="store_true",
                         help="Test mode, do not call VLM")

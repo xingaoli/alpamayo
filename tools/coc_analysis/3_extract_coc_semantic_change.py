@@ -74,7 +74,7 @@ Your goal is to identify the **FIRST critical moment** where the driving maneuve
     return prompt
 
 
-def call_llm(prompt: str, client: OpenAI, model: str = "default") -> int:
+def call_llm(prompt: str, client: OpenAI, model: str = "ckpts/Qwen3.6-27B-FP8") -> int:
     """Call LLM and parse result"""
     try:
         response = client.chat.completions.create(
