@@ -94,11 +94,7 @@ ipython_config.py
 #   install all needed dependencies.
 # Pipfile.lock
 
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
+uv.lock
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
@@ -194,14 +190,9 @@ cython_debug/
 #   Learn more at https://abstra.io/docs
 .abstra/
 
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
-#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer,
-#   you could uncomment the following to ignore the entire vscode folder
-# .vscode/
+.vscode/
 
-# Ruff stuff:
+# UV
 .ruff_cache/
 
 # PyPI configuration file
@@ -243,3 +234,6 @@ scripts/train_stage1_8b_local.sh
 scripts/train_coc_stage1_2b_local.sh
 scripts/train_coc_stage2_2b_local.sh
 scripts/eval_trajs_local.sh
+scripts/train_stage1_2b_offload_local.sh
+
+wandb

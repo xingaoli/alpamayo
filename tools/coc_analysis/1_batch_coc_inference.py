@@ -25,9 +25,9 @@ import numpy as np
 from tqdm import tqdm
 
 import physical_ai_av
-from alpamayo1_5.models.alpamayo1_5 import Alpamayo1_5
-from alpamayo1_5.load_physical_aiavdataset_local import load_physical_aiavdataset_local
-from alpamayo1_5 import helper
+from alpamayo_r1.models.alpamayo_r1 import AlpamayoR1
+from alpamayo_r1.load_physical_aiavdataset_local import load_physical_aiavdataset_local
+from alpamayo_r1 import helper
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -95,7 +95,7 @@ def generate_timestamps_us(center_timestamp_us: int, window_sec: float = 1.5, in
 
 
 def run_coc_inference(
-    model: Alpamayo1_5,
+    model: AlpamayoR1,
     processor,
     avdi,
     clip_id: str,
@@ -176,7 +176,7 @@ def process_single_video(
     clip_id: str,
     data_dir: str,
     meta_actions_data: Dict,
-    model: Alpamayo1_5,
+    model: AlpamayoR1,
     processor,
     avdi,
     output_json_path: Path,
@@ -388,7 +388,7 @@ Examples:
     
     # Initialize model and dataset interface
     print("\nLoading model...")
-    model = Alpamayo1_5.from_pretrained(args.model_path, dtype=torch.bfloat16).to("cuda")
+    model = AlpamayoR1.from_pretrained(args.model_path, dtype=torch.bfloat16).to("cuda")
     processor = helper.get_processor(model.tokenizer)
     avdi = physical_ai_av.PhysicalAIAVDatasetInterface()
     print("✓ Model loaded")
