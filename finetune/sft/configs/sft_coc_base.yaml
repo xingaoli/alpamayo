@@ -18,6 +18,7 @@ data:
 paths:
   output_dir: ./outputs/output_sft_coc
 callbacks: {}
+resume_from_checkpoint: null
 evaluate:
   max_eval_steps: -1
   torch_dtype: bfloat16

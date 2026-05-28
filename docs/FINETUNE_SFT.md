@@ -76,6 +76,13 @@ You can override the checkpoint location, for example:
 
 This must be the same directory you created with `huggingface-cli download nvidia/Alpamayo-R1-10B …`.
 
+To resume an interrupted Trainer run, point `resume_from_checkpoint` at the saved
+checkpoint directory:
+
+```
+torchrun --nproc_per_node 8 -m finetune.sft.train_hf --config-path pkg://finetune/sft/configs --config-name sft_stage1 resume_from_checkpoint=/path/to/output_stage1/checkpoint-4000
+```
+
 Example log lines:
 
 ```

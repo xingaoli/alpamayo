@@ -21,6 +21,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from alpamayo_r1.common import logging
 from alpamayo_r1.common import misc
+from alpamayo_r1.common.process_title import configure_process_title
 
 from finetune.sft.trainer import ReasoningVLA_Trainer
 from finetune.sft.trainer import TrainingArguments
@@ -35,13 +36,33 @@ logger = logging.RankedLogger("train", rank_zero_only=True)
 logger.setLevel("INFO")
 
 
+def _normalize_resume_from_checkpoint(resume_from_checkpoint):
+    if resume_from_checkpoint in (None, False):
+        return None
+
+    if resume_from_checkpoint is True:
+        return True
+
+    checkpoint_path = os.path.abspath(os.path.expanduser(str(resume_from_checkpoint)))
+    if not os.path.isdir(checkpoint_path):
+        raise FileNotFoundError(f"resume_from_checkpoint does not exist: {checkpoint_path}")
+
+    return checkpoint_path
+
+
 @hydra.main(version_base=None, config_path=None, config_name="config")
 def train(cfg: DictConfig) -> None:
     """Main training entry point."""
+    configure_process_title()
     misc.seed_everything(42)
 
     training_args = TrainingArguments(**OmegaConf.to_container(cfg.trainer, resolve=True))
+    resume_from_checkpoint = _normalize_resume_from_checkpoint(
+        cfg.get("resume_from_checkpoint", None)
+    )
     logger.info("Configs:\n" + misc.pformat(OmegaConf.to_container(cfg, resolve=True)))
+    if resume_from_checkpoint:
+        logger.info(f"Resuming training from checkpoint: {resume_from_checkpoint}")
 
     model = hyu.instantiate(cfg.model, _convert_="partial")
 
@@ -87,7 +108,7 @@ def train(cfg: DictConfig) -> None:
             include_hydra_config=True,
         )
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     if torch.distributed.is_initialized():
         torch.distributed.destroy_process_group()
 
