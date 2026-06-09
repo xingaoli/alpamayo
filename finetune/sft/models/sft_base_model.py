@@ -107,6 +107,18 @@ def load_alpamayo1_vlm(checkpoint_path: str, model: Any):
     if not vlm_state_dict:
         raise ValueError(f"No vlm.* tensors found in checkpoint: {checkpoint_dir}")
 
+    # Guard: ckpt sometimes omits `vlm.lm_head.weight` (Qwen3-VL uses weight tying with
+    # embed_tokens; if the tied lm_head is filtered out by the saver, it must be
+    # re-bound from embed_tokens on load — otherwise inference produces garbled tokens
+    # because the original (152064,) HF lm_head doesn't cover the new 155697 vocab).
+    if "vlm.lm_head.weight" not in vlm_state_dict:
+        embed_key = "vlm.model.language_model.embed_tokens.weight"
+        if embed_key in vlm_state_dict:
+            vlm_state_dict["vlm.lm_head.weight"] = vlm_state_dict[embed_key]
+            logger.info(
+                "vlm.lm_head.weight missing in checkpoint, bound from embed_tokens (weight tying)."
+            )
+
     load_result = model.load_state_dict(vlm_state_dict, strict=False, assign=True)
     logger.info(
         f"Loaded {len(vlm_state_dict)} VLM tensors from {checkpoint_dir} (missing={len(load_result.missing_keys)}, unexpected={len(load_result.unexpected_keys)})",
