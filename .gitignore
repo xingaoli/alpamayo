@@ -237,3 +237,5 @@ scripts/eval_trajs_local.sh
 scripts/train_stage1_2b_offload_local.sh
 
 wandb
+
+opencode.json
