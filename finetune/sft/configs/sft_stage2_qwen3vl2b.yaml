@@ -9,5 +9,6 @@ trainer:
   gradient_checkpointing: false
   deepspeed: null
   ddp_find_unused_parameters: true
+  gradient_accumulation_steps: 8
 evaluate:
   eval_ckpt: null

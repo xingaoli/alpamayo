@@ -15,8 +15,10 @@
 
 import json
 import os
+import pickle
 from typing import Any
 
+import pandas as pd
 import torch
 from alpamayo_r1.load_physical_aiavdataset_local import load_physical_aiavdataset_local
 from alpamayo_r1.common import logging
@@ -31,9 +33,8 @@ logger.setLevel("INFO")
 class COCDataset(Dataset):
     """Dataset that loads COC reasoning text and joins with PAI trajectory data.
 
-    Each sample in the COC JSONL has a clip_id and frame_idx. The frame_idx is
-    in units of 0.1s per frame, so t0_us = frame_idx * 100_000 (e.g. frame_idx=52
-    -> 5.2s -> 5_200_000 us). The CoC text is injected as the "cot" field.
+    Each sample in the COC JSONL has a clip_id and ts (timestamp in microseconds).
+    The CoC text is injected as the "cot" field.
     """
 
     def __init__(
@@ -66,23 +67,46 @@ class COCDataset(Dataset):
             f"Set ALPAMAYO_DATA_DIR env var or pass local_dir."
         )
 
-        # Load the full JSONL into memory as a flat list of (clip_id, frame_idx, text)
         logger.info(f"Loading COC annotations from {coc_jsonl_path} ...")
         self.samples: list[dict[str, Any]] = []
-        with open(coc_jsonl_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                row = json.loads(line)
+
+        if coc_jsonl_path.endswith(".jsonl"):
+            with open(coc_jsonl_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    row = json.loads(line)
+                    self.samples.append({
+                        "clip_id": row["clip_id"],
+                        "ts": row["ts"],
+                        "cot": row["coc"],
+                    })
+        elif coc_jsonl_path.endswith(".json"):
+            with open(coc_jsonl_path, "r") as f:
+                data = json.load(f)
+            for row in data:
                 self.samples.append({
                     "clip_id": row["clip_id"],
-                    "frame_idx": row["frame_idx"],
-                    "cot": row["text"],
-                    "long_action": row.get("long_action", ""),
-                    "lat_action": row.get("lat_action", ""),
+                    "ts": int(row["ts"]),
+                    "cot": row["coc"],
                 })
+        else:
+            raise ValueError(f"Unsupported file format: {coc_jsonl_path}. Expected .jsonl or .json")
         logger.info(f"Loaded {len(self.samples)} COC samples")
+
+        self._cache_dir = os.environ.get("ALPAMAYO_DATA_CACHE_DIR", "data/pai_reasoning_cache")
+        self._pkl_cache: dict[str, dict] = {}
+
+        clip_index_path = os.path.join(local_dir, clip_index_metadata)
+        if os.path.exists(clip_index_path):
+            df = pd.read_parquet(clip_index_path)
+            self._local_clip_ids = {
+                str(cid) for cid, chunk in zip(df.index, df["chunk"]) if 0 <= chunk <= 49
+            }
+        else:
+            self._local_clip_ids = set()
+            logger.warning(f"clip_index not found at {clip_index_path}, all clips will be loaded from cache")
 
         self.include_extr_intr = include_extr_intr
         self.num_history_steps = num_history_steps
@@ -97,7 +121,7 @@ class COCDataset(Dataset):
         valid_indices = []
         dropped = 0
         for i, s in enumerate(self.samples):
-            t0_us = s["frame_idx"] * 100_000
+            t0_us = s["ts"]
             max_future = 20_000_000 - t0_us  # clip max ~20s
             if t0_us > min_t0_us and max_future >= future_range_us:
                 valid_indices.append(i)
@@ -105,7 +129,7 @@ class COCDataset(Dataset):
                 dropped += 1
         if dropped > 0:
             logger.info(
-                f"Dropped {dropped} COC samples whose frame_idx is out of "
+                f"Dropped {dropped} COC samples whose t0 is out of "
                 f"trajectory range (valid: {len(valid_indices)})"
             )
         self.valid_indices = valid_indices
@@ -116,21 +140,59 @@ class COCDataset(Dataset):
         if vla_preprocess_args is not None:
             self.vla_preprocess_func = instantiate(vla_preprocess_args, model_config=model_config)
 
+    def _load_from_cache(self, clip_id: str, t0_us: int) -> dict[str, Any]:
+        pkl_path = os.path.join(self._cache_dir, "sample", f"{clip_id}.pkl")
+
+        if clip_id not in self._pkl_cache:
+            if not os.path.exists(pkl_path):
+                raise FileNotFoundError(f"Cache pkl not found: {pkl_path}")
+            with open(pkl_path, "rb") as f:
+                self._pkl_cache[clip_id] = pickle.load(f)
+
+        payload = self._pkl_cache[clip_id]
+        inner = payload.get(t0_us)
+        if inner is None:
+            inner = payload.get(str(t0_us))
+        if inner is None:
+            available = list(payload.keys())[:3]
+            raise KeyError(
+                f"Timestamp {t0_us} not found in cache for clip {clip_id} "
+                f"(available: {available}...)"
+            )
+
+        data = inner["data"]
+
+        camera_mode = os.environ.get("ALPAMAYO_CAMERA_MODE", "4cam")
+        if camera_mode == "2cam":
+            # Cached data is always 4cam order: cross_left(0), front_wide(1), cross_right(2), front_tele(3)
+            cam_indices = [1, 3]
+            data = dict(data)
+            data["image_frames"] = data["image_frames"][cam_indices]
+            data["camera_indices"] = data["camera_indices"][cam_indices]
+            data["relative_timestamps"] = data["relative_timestamps"][cam_indices]
+            data["absolute_timestamps"] = data["absolute_timestamps"][cam_indices]
+
+        return data
+
     def __len__(self) -> int:
         return len(self.valid_indices)
 
     def __getitem__(self, idx: int) -> dict[str, Any] | None:
         sample = self.samples[self.valid_indices[idx]]
         clip_id = sample["clip_id"]
-        t0_us = sample["frame_idx"] * 100_000
+        t0_us = sample["ts"]
 
-        sample_data = load_physical_aiavdataset_local(
-            clip_id,
-            t0_us=t0_us,
-            num_history_steps=self.num_history_steps,
-            num_future_steps=self.num_future_steps,
-            time_step=self.time_step,
-        )
+        if clip_id in self._local_clip_ids:
+            sample_data = load_physical_aiavdataset_local(
+                clip_id,
+                data_dir=self.local_dir,
+                t0_us=t0_us,
+                num_history_steps=self.num_history_steps,
+                num_future_steps=self.num_future_steps,
+                time_step=self.time_step,
+            )
+        else:
+            sample_data = self._load_from_cache(clip_id, t0_us)
 
         for key in list(sample_data.keys()):
             if key.startswith("ego_"):
