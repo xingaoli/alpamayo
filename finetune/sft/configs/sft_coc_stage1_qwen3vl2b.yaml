@@ -1,6 +1,6 @@
 defaults:
   - sft_coc_base_local
-  - /models/qwen3vl2b_base@model
+  - /models/ar1_base@model
   - _self_
 
 trainer:

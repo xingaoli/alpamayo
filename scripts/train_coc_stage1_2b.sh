@@ -8,10 +8,13 @@ export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1,3}
 
 NUM_GPUS=${NUM_GPUS:-3}
 CONFIG_PATH=/home/xingao/code/Alpamayo/finetune/sft/configs
-CONFIG_NAME=sft_coc_stage1_qwen3vl2b_local
+CONFIG_NAME=sft_coc_stage1_qwen3vl2b
+STAGE2_CKPT=${STAGE2_CKPT:-/home/xingao/code/Alpamayo/outputs/output_stage2_2b/checkpoint-6000}
 
 torchrun --nproc_per_node=${NUM_GPUS} \
     finetune/sft/train_hf.py \
     --config-path=${CONFIG_PATH} \
     --config-name=${CONFIG_NAME} \
+    model.checkpoint_path=${STAGE2_CKPT} \
+    model.vlm_name_or_path=ckpts/Qwen3-VL-2B-Instruct \
     "$@"
