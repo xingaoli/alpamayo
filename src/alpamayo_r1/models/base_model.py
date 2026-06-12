@@ -454,3 +454,23 @@ class ReasoningVLA(PreTrainedModel, TrajectoryFusionMixin):
         """Delegate weight tying to the nested VLM model."""
         if hasattr(self.vlm, "tie_weights"):
             self.vlm.tie_weights()
+
+    def save_pretrained(self, save_directory, state_dict=None, **kwargs):
+        """Save model, cloning any tied lm_head.weight to prevent safetensors dedup.
+
+        Qwen3-VL-2B uses weight tying (lm_head.weight == embed_tokens.weight).
+        Safetensors cannot save aliased tensors, so HF's save_pretrained silently
+        drops lm_head. We keep weights tied during training for correctness, and
+        only clone in the state_dict at save time.
+        """
+        if state_dict is None:
+            state_dict = self.state_dict()
+        lm_key = "vlm.lm_head.weight"
+        embed_key = "vlm.model.language_model.embed_tokens.weight"
+        if lm_key in state_dict and embed_key in state_dict:
+            if state_dict[lm_key].data_ptr() == state_dict[embed_key].data_ptr():
+                state_dict[lm_key] = state_dict[lm_key].clone()
+                logger.info(
+                    "Cloned vlm.lm_head.weight in state_dict to prevent safetensors dedup."
+                )
+        return super().save_pretrained(save_directory, state_dict=state_dict, **kwargs)

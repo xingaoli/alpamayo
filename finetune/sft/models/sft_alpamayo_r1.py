@@ -59,6 +59,39 @@ class TrainableAlpamayoR1(AlpamayoR1):
             logger.info(f"{key}: {value:,}")
 
     @classmethod
+    def from_pretrained(
+        cls,
+        pretrained_model_name_or_path: str,
+        stage1_vlm_checkpoint_path: str | None = None,
+        cotrain_vlm: bool = False,
+        stop_grad_from_vlm: bool = True,
+        **kwargs: Any,
+    ) -> "TrainableAlpamayoR1":
+        """Load pretrained model, then optionally overwrite VLM from stage1 checkpoint.
+
+        Without stage1_vlm_checkpoint_path: loads full pretrained model as-is.
+        With stage1_vlm_checkpoint_path: loads pretrained model first, then overwrites
+        VLM weights from the stage1 checkpoint. This allows using pretrained expert /
+        diffusion modules with a separately trained stage1 VLM.
+        """
+        model = super().from_pretrained(
+            pretrained_model_name_or_path,
+            stage1_vlm_checkpoint_path=stage1_vlm_checkpoint_path,
+            cotrain_vlm=cotrain_vlm,
+            stop_grad_from_vlm=stop_grad_from_vlm,
+            **kwargs,
+        )
+        # After _load_pretrained_model, reload stage1 VLM to overwrite the pretrained VLM.
+        # __init__ also loads it, but _load_pretrained_model (called after __init__) would
+        # have overwritten it with the pretrained weights.
+        if stage1_vlm_checkpoint_path is not None:
+            model.vlm = load_alpamayo1_vlm(stage1_vlm_checkpoint_path, model.vlm)
+            if not cotrain_vlm:
+                for param in model.vlm.parameters():
+                    param.requires_grad = False
+        return model
+
+    @classmethod
     def from_stage1_checkpoint(
         cls,
         stage1_checkpoint_path: str,
