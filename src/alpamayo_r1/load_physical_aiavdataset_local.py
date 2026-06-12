@@ -165,6 +165,9 @@ def load_physical_aiavdataset_local(
 
             # Decode frames at the requested timestamps (same as original!)
             frames, frame_timestamps = reader.decode_images_from_timestamps(image_timestamps)
+            # Close reader to release FFmpeg decoder threads — without this,
+            # each __getitem__ leaks a thread pool (4 cameras * N threads = OOM).
+            reader.close()
 
         frames_tensor = torch.from_numpy(frames)
         frames_tensor = rearrange(frames_tensor, "t h w c -> t c h w")

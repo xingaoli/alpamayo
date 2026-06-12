@@ -1,6 +1,6 @@
 _recursive_: false
 _target_: finetune.sft.models.sft_base_model.TrainableReasoningVLA.from_qwen3vl_checkpoint
-vlm_name_or_path: ckpts/Qwen3-VL-2B-Instruct
+vlm_name_or_path: ckpts/Cosmos-Reason2-2B
 traj_vocab_size: 4000
 tokens_per_future_traj: 128
 tokens_per_history_traj: 48

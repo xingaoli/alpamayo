@@ -3,8 +3,20 @@
 
 cd /home/xingao/code/Alpamayo
 
+# Load environment variables (ALPAMAYO_WORKER_NUM_THREADS etc.)
+source "$(dirname "$0")/../.env" 2>/dev/null || true
+
 export PYTHONPATH=/home/xingao/code/Alpamayo
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1}
+
+# Limit per-worker threads and malloc arenas to prevent memory fragmentation.
+# These must be set BEFORE process start; os.environ in Python is too late for glibc.
+export ALPAMAYO_WORKER_NUM_THREADS=${ALPAMAYO_WORKER_NUM_THREADS:-2}
+export OMP_NUM_THREADS=$ALPAMAYO_WORKER_NUM_THREADS
+export MKL_NUM_THREADS=$ALPAMAYO_WORKER_NUM_THREADS
+export OPENBLAS_NUM_THREADS=$ALPAMAYO_WORKER_NUM_THREADS
+export TORCH_NUM_THREADS=$ALPAMAYO_WORKER_NUM_THREADS
+export MALLOC_ARENA_MAX=$ALPAMAYO_WORKER_NUM_THREADS
 export PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}
 # export PROCESS_TITLE=Stage1-2B-Offload
 
