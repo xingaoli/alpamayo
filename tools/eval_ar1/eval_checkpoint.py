@@ -1,10 +1,10 @@
 """Evaluate a trained Stage 1 or Stage 2 checkpoint on the eval dataset.
 
 Usage (multi-GPU):
-    torchrun --nproc_per_node=2 tools/eval_checkpoint.py --stage 2 --checkpoint ckpts/Alpamayo-1.5-10B
+    torchrun --nproc_per_node=2 tools/eval_ar1/eval_checkpoint.py --stage 2 --checkpoint ckpts/Alpamayo-1.5-10B
 
 Usage (single-GPU):
-    python tools/eval_checkpoint.py --stage 1 --checkpoint outputs/output_stage1/checkpoint-1000
+    python tools/eval_ar1/eval_checkpoint.py --stage 1 --checkpoint outputs/output_stage1/checkpoint-1000
 
 By default only the final per-metric averages are printed. To inspect a single
 batch in detail (shapes, GT, pred_xyz, per-candidate ADE), set DEBUG_EVAL=1.

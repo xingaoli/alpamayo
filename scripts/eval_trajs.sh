@@ -49,7 +49,7 @@ for ckpt_num in "${CKPT_NUMS[@]}"; do
     echo "--------------------------------------------" | tee -a "$LOG_FILE"
 
     torchrun --nproc_per_node=${NUM_GPUS} \
-        tools/eval_checkpoint.py \
+        tools/eval_ar1/eval_checkpoint.py \
         --stage 1 \
         --checkpoint "$CKPT_PATH" \
         --batch_size 4 \
