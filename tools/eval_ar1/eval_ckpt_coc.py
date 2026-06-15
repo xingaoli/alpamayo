@@ -109,6 +109,8 @@ def main():
     parser.add_argument("--data_dir", type=str,
                         default=os.getenv("ALPAMAYO_DATA_DIR", "data/PhysicalAI-Autonomous-Vehicles"))
     parser.add_argument("--vlm", type=str, default="ckpts/Qwen3-VL-8B-Instruct-config")
+    parser.add_argument("--stage1_vlm_checkpoint_path", type=str, default=None,
+                        help="Path to Stage 1 VLM checkpoint for correct lm_head loading (Stage 2 only)")
     parser.add_argument("--num_traj_samples", type=int, default=6)
     parser.add_argument("--max_new_tokens", type=int, default=-1,
                         help="-1 = auto (256 for both stages when evaluating CoC)")
@@ -135,7 +137,7 @@ def main():
 
     # -------------------------------------------------------------- model
     model_config = load_model_config(args.checkpoint, args.vlm)
-    model = load_model(args.stage, args.checkpoint, args.vlm)
+    model = load_model(args.stage, args.checkpoint, args.vlm, stage1_vlm_checkpoint_path=args.stage1_vlm_checkpoint_path)
     if is_main:
         n_total = sum(p.numel() for p in model.parameters())
         print(f"[eval_coc] Model loaded. total params={n_total:,}")

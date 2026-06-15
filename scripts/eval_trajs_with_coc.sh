@@ -7,6 +7,7 @@ set -euo pipefail
 
 STAGE=${STAGE:-2}
 CHECKPOINT=${CHECKPOINT:-outputs/output_coc_stage2_2b/checkpoint-10}
+STAGE1_VLM_CKPT=${STAGE1_VLM_CKPT:-outputs/output_coc_stage1_2b/checkpoint-1000}
 COC_JSONL=${COC_JSONL:-data/coc.jsonl}
 
 cd /home/xingao/code/Alpamayo
@@ -28,4 +29,5 @@ torchrun --nproc_per_node=${NUM_GPUS} \
     --vlm "$VLM" \
     --batch_size "$BATCH_SIZE" \
     --num_workers "$NUM_WORKERS" \
-    --output_jsonl "$OUTPUT_JSONL"
+    --output_jsonl "$OUTPUT_JSONL" \
+    --stage1_vlm_checkpoint_path "$STAGE1_VLM_CKPT"

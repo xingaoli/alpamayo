@@ -109,7 +109,7 @@ def load_model_config(checkpoint_path: str, vlm_name_or_path: str):
     )
 
 
-def load_model(stage: int, checkpoint_path: str, vlm_name_or_path: str):
+def load_model(stage: int, checkpoint_path: str, vlm_name_or_path: str, stage1_vlm_checkpoint_path: str | None = None):
     """Load model for the given stage.
 
     stage==1 → TrainableReasoningVLA:只有 VLM,没有 diffusion expert,
@@ -130,6 +130,9 @@ def load_model(stage: int, checkpoint_path: str, vlm_name_or_path: str):
         )
     elif stage == 2:
         logger.info(f"Loading Stage 2 model from {checkpoint_path}...")
+        # When stage1_vlm_checkpoint_path is provided, load_alpamayo1_vlm will
+        # correctly overwrite the VLM weights (including the untied lm_head)
+        # after from_pretrained re-ties lm_head to embed_tokens.
         model = instantiate(
             {
                 "_target_": "finetune.sft.models.sft_alpamayo_r1.TrainableAlpamayoR1.from_pretrained",
@@ -137,7 +140,7 @@ def load_model(stage: int, checkpoint_path: str, vlm_name_or_path: str):
                 "pretrained_model_name_or_path": checkpoint_path,
                 "dtype": "auto",
                 "cotrain_vlm": False,
-                "stage1_vlm_checkpoint_path": None,
+                "stage1_vlm_checkpoint_path": stage1_vlm_checkpoint_path,
             }
         )
     else:
@@ -220,6 +223,8 @@ def main():
     parser.add_argument("--data_dir", type=str, default=os.getenv("ALPAMAYO_DATA_DIR", "data/PhysicalAI-Autonomous-Vehicles"))
     parser.add_argument("--eval_chunks", type=str, default="48-50")
     parser.add_argument("--vlm", type=str, default="ckpts/Qwen3-VL-8B-Instruct-config")
+    parser.add_argument("--stage1_vlm_checkpoint_path", type=str, default=None,
+                        help="Path to Stage 1 VLM checkpoint for correct lm_head loading (Stage 2 only)")
     parser.add_argument("--num_traj_samples", type=int, default=6, help="K, candidates per sample")
     parser.add_argument("--max_new_tokens", type=int, default=-1,
                         help="Max new tokens to generate. -1 = auto (stage1: 128, stage2: 256)")
@@ -243,7 +248,7 @@ def main():
               f"top_p={args.top_p}  temperature={args.temperature}  max_new_tokens={args.max_new_tokens}  "
               f"DEBUG_EVAL={DEBUG_EVAL}")
     model_config = load_model_config(args.checkpoint, args.vlm)
-    model = load_model(args.stage, args.checkpoint, args.vlm)
+    model = load_model(args.stage, args.checkpoint, args.vlm, stage1_vlm_checkpoint_path=args.stage1_vlm_checkpoint_path)
     if is_main:
         n_total = sum(p.numel() for p in model.parameters())
         print(f"[eval] Model loaded. total params={n_total:,}  "

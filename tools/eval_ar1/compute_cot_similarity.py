@@ -11,9 +11,9 @@ Usage:
 
     # Custom vLLM endpoint / model:
     python tools/eval_ar1/compute_cot_similarity.py \
-        --input outputs/ckpts_coc_eval.jsonl \
-        --base-url http://0.0.0.0:8080/v1 \
-        --model ckpts/Qwen3.6-27B-int4-AutoRound
+        --input outputs/output_coc_stage1_2b_coc_eval.jsonl \
+        --base-url http://127.0.0.1:8080/v1 \
+        --model ckpts/Qwen3.6-27B-FP8
 
     # Dry run (print entries, no API calls):
     python tools/eval_ar1/compute_cot_similarity.py \

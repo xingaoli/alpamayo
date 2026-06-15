@@ -76,6 +76,12 @@ def tokenize_future_trajectory(
 
 def load_alpamayo1_vlm(checkpoint_path: str, model: Any):
     # Load fine-tuned vlm.* weights from the checkpoint directory.
+    # The caller may pass either the wrapper model (keys need "vlm." prefix)
+    # or the VLM sub-module (keys must NOT have "vlm." prefix).
+    # Detect which one by checking the model's own state_dict keys.
+    model_sd_keys = set(model.state_dict().keys())
+    needs_vlm_prefix = any(k.startswith("vlm.") for k in model_sd_keys)
+
     checkpoint_dir = Path(checkpoint_path)
     index_path = checkpoint_dir / "model.safetensors.index.json"
     vlm_state_dict: dict[str, torch.Tensor] = {}
@@ -94,7 +100,8 @@ def load_alpamayo1_vlm(checkpoint_path: str, model: Any):
             shard_sd = load_safetensors_file(str(shard_path), device="cpu")
             for key in keys:
                 if key in shard_sd:
-                    vlm_state_dict[key] = shard_sd[key]
+                    out_key = key if needs_vlm_prefix else key.removeprefix("vlm.")
+                    vlm_state_dict[out_key] = shard_sd[key]
     else:
         # Single safetensors file (no index)
         safetensors_files = sorted(checkpoint_dir.glob("model*.safetensors"))
@@ -102,21 +109,23 @@ def load_alpamayo1_vlm(checkpoint_path: str, model: Any):
             shard_sd = load_safetensors_file(str(safetensors_file), device="cpu")
             for key in shard_sd:
                 if key.startswith("vlm."):
-                    vlm_state_dict[key] = shard_sd[key]
+                    out_key = key if needs_vlm_prefix else key.removeprefix("vlm.")
+                    vlm_state_dict[out_key] = shard_sd[key]
 
     if not vlm_state_dict:
         raise ValueError(f"No vlm.* tensors found in checkpoint: {checkpoint_dir}")
 
-    # Guard: ckpt sometimes omits `vlm.lm_head.weight` (Qwen3-VL uses weight tying with
+    # Guard: ckpt sometimes omits lm_head weight (Qwen3-VL uses weight tying with
     # embed_tokens; if the tied lm_head is filtered out by the saver, it must be
     # re-bound from embed_tokens on load — otherwise inference produces garbled tokens
     # because the original (152064,) HF lm_head doesn't cover the new 155697 vocab).
-    if "vlm.lm_head.weight" not in vlm_state_dict:
-        embed_key = "vlm.model.language_model.embed_tokens.weight"
+    lm_head_key = "vlm.lm_head.weight" if needs_vlm_prefix else "lm_head.weight"
+    embed_key = "vlm.model.language_model.embed_tokens.weight" if needs_vlm_prefix else "model.language_model.embed_tokens.weight"
+    if lm_head_key not in vlm_state_dict:
         if embed_key in vlm_state_dict:
-            vlm_state_dict["vlm.lm_head.weight"] = vlm_state_dict[embed_key]
+            vlm_state_dict[lm_head_key] = vlm_state_dict[embed_key]
             logger.info(
-                "vlm.lm_head.weight missing in checkpoint, bound from embed_tokens (weight tying)."
+                f"{lm_head_key} missing in checkpoint, bound from embed_tokens (weight tying)."
             )
 
     load_result = model.load_state_dict(vlm_state_dict, strict=False, assign=True)
