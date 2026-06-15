@@ -23,7 +23,7 @@ export MALLOC_ARENA_MAX=$ALPAMAYO_WORKER_NUM_THREADS
 
 NUM_GPUS=${NUM_GPUS:-3}
 CONFIG_PATH=/home/xingao/code/Alpamayo/finetune/sft/configs
-CONFIG_NAME=sft_stage1_qwen3vl2b_local
+CONFIG_NAME=sft_stage1_qwen3vl2b
 RESUME_ARGS=()
 if [[ -n "${RESUME_FROM_CHECKPOINT:-}" ]]; then
     RESUME_ARGS+=(resume_from_checkpoint="${RESUME_FROM_CHECKPOINT}")

@@ -1,5 +1,5 @@
 defaults:
-  - sft_coc_base_local
+  - sft_coc_base
   - /models/ar1_expert@model
   - _self_
 
@@ -9,5 +9,11 @@ trainer:
   gradient_checkpointing: false
   deepspeed: null
   ddp_find_unused_parameters: true
+  per_device_train_batch_size: 16
+  gradient_accumulation_steps: 1
+  dataloader_num_workers: 16
+  save_total_limit: 2
+  num_train_epochs: 1
+  save_steps: 500
 evaluate:
   eval_ckpt: null

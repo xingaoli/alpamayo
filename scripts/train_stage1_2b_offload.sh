@@ -22,7 +22,7 @@ export PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:Tr
 
 NUM_GPUS=${NUM_GPUS:-2}
 CONFIG_PATH=/home/xingao/code/Alpamayo/finetune/sft/configs
-CONFIG_NAME=sft_stage1_qwen3vl2b_local
+CONFIG_NAME=sft_stage1_qwen3vl2b
 RESUME_ARGS=()
 if [[ -n "${RESUME_FROM_CHECKPOINT:-}" ]]; then
     RESUME_ARGS+=(resume_from_checkpoint="${RESUME_FROM_CHECKPOINT}")

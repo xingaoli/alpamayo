@@ -1,5 +1,5 @@
 defaults:
-  - sft_base_local
+  - sft_base
   - /models/qwen3vl2b_expert@model
   - _self_
 
@@ -9,6 +9,11 @@ trainer:
   gradient_checkpointing: false
   deepspeed: null
   ddp_find_unused_parameters: true
-  gradient_accumulation_steps: 8
+  gradient_accumulation_steps: 1
+  per_device_train_batch_size: 16
+  dataloader_num_workers: 16
+  save_total_limit: 2
+  num_train_epochs: 1
+  save_steps: 3000
 evaluate:
   eval_ckpt: null
