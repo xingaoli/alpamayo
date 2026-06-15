@@ -250,8 +250,49 @@ class TrainableReasoningVLA(ReasoningVLA, TrajectoryFusionWithFutureMixin):
         if config.traj_tokenizer_cfg is not None:
             pretrained_modules["traj_tokenizer"] = instantiate(config.traj_tokenizer_cfg)
 
-        model = cls(config, pretrained_modules=pretrained_modules or None)
-        model = load_alpamayo1_vlm(checkpoint_path, model)
+        # Build the model with real (materialized) parameters and load checkpoint
+        # weights with DeepSpeed ZeRO-3's auto-partitioning temporarily disabled.
+        #
+        # Creating ``TrainingArguments(deepspeed=...)`` beforehand installs a HF
+        # ``HfDeepSpeedConfig``; its weak ref makes ``is_deepspeed_zero3_enabled()``
+        # return True, and transformers then wraps *every* model construction in
+        # ``deepspeed.zero.Init()`` (enabled=True). Parameters therefore come up
+        # empty/partitioned (shape [0]) and the ``load_state_dict`` below fails with
+        # size-mismatch errors. Temporarily clearing that weak ref disables the
+        # auto-partitioning for this construction + weight load; restoring it lets
+        # the HF Trainer re-partition the returned model afterward. The
+        # ``zero.Init(enabled=False)`` wrapper is a belt-and-suspenders second layer.
+        _ds_ref_module = None
+        try:
+            from transformers.integrations import deepspeed as _ds_ref_module
+        except ImportError:
+            try:
+                import transformers.deepspeed as _ds_ref_module  # type: ignore
+            except ImportError:
+                _ds_ref_module = None
+        _saved_ds_ref = getattr(_ds_ref_module, "_hf_deepspeed_config_weak_ref", "missing")
+        _cleared_ds_ref = (
+            _ds_ref_module is not None and _saved_ds_ref != "missing"
+        )
+        if _cleared_ds_ref:
+            _ds_ref_module._hf_deepspeed_config_weak_ref = None
+
+        try:
+            import deepspeed
+
+            init_ctx = deepspeed.zero.Init(enabled=False)
+        except Exception:
+            from contextlib import nullcontext
+
+            init_ctx = nullcontext()
+
+        try:
+            with init_ctx:
+                model = cls(config, pretrained_modules=pretrained_modules or None)
+                model = load_alpamayo1_vlm(checkpoint_path, model)
+        finally:
+            if _cleared_ds_ref:
+                _ds_ref_module._hf_deepspeed_config_weak_ref = _saved_ds_ref
 
         return model
 
