@@ -237,6 +237,6 @@ scripts/eval_trajs_local.sh
 scripts/train_stage1_2b_offload_local.sh
 scripts/eval_trajs_with_coc_local.sh
 
-wandb
-
+/wandb/
+finetune/sft/configs/wandb/local.yaml
 opencode.json
