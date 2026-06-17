@@ -20,7 +20,10 @@ from typing import Any
 
 import pandas as pd
 import torch
-from alpamayo_r1.load_physical_aiavdataset_local import load_physical_aiavdataset_local
+from alpamayo_r1.load_physical_aiavdataset_local import (
+    BadLocalZipError,
+    load_physical_aiavdataset_local,
+)
 from alpamayo_r1.common import logging
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
@@ -104,8 +107,19 @@ class COCDataset(Dataset):
             self._local_clip_ids = {
                 str(cid) for cid, chunk in zip(df.index, df["chunk"]) if 0 <= chunk <= 49
             }
+            # Pre-scan: identify clips whose local camera/egomotion zips are
+            # missing or corrupt. These are skipped entirely (no cache fallback,
+            # since cache only covers chunk>=50).
+            self._bad_local_clip_ids = self._scan_bad_local_clips(df, local_dir)
+            if self._bad_local_clip_ids:
+                logger.warning(
+                    f"Excluding {len(self._bad_local_clip_ids)} local clips whose "
+                    f"camera/egomotion zip is missing or corrupt "
+                    f"(sample: {sorted(self._bad_local_clip_ids)[:3]})"
+                )
         else:
             self._local_clip_ids = set()
+            self._bad_local_clip_ids = set()
             logger.warning(f"clip_index not found at {clip_index_path}, all clips will be loaded from cache")
 
         self.include_extr_intr = include_extr_intr
@@ -121,6 +135,9 @@ class COCDataset(Dataset):
         valid_indices = []
         dropped = 0
         for i, s in enumerate(self.samples):
+            if s["clip_id"] in self._bad_local_clip_ids:
+                dropped += 1
+                continue
             t0_us = s["ts"]
             max_future = 20_000_000 - t0_us  # clip max ~20s
             if t0_us > min_t0_us and max_future >= future_range_us:
@@ -129,8 +146,8 @@ class COCDataset(Dataset):
                 dropped += 1
         if dropped > 0:
             logger.info(
-                f"Dropped {dropped} COC samples whose t0 is out of "
-                f"trajectory range (valid: {len(valid_indices)})"
+                f"Dropped {dropped} COC samples (t0 out of range or bad local zip) "
+                f"(valid: {len(valid_indices)})"
             )
         self.valid_indices = valid_indices
 
@@ -174,6 +191,68 @@ class COCDataset(Dataset):
 
         return data
 
+    @staticmethod
+    def _scan_bad_local_clips(
+        clip_index_df: "pd.DataFrame",
+        local_dir: str,
+    ) -> set[str]:
+        """Return the set of clip_ids whose local zips are missing or corrupt.
+
+        For every (chunk in [0,49]) × (camera feature) we open the zip and read
+        its central directory. We also probe the egomotion zip. Anything that
+        raises (missing, BadZipFile, OSError) marks all clips in that chunk as
+        bad — over-filtering a chunk is cheap and safe; under-filtering crashes
+        the DataLoader worker.
+        """
+        import zipfile
+
+        camera_mode = os.environ.get("ALPAMAYO_CAMERA_MODE", "4cam")
+        if camera_mode == "2cam":
+            cams = ["camera_front_wide_120fov", "camera_front_tele_30fov"]
+        else:
+            cams = [
+                "camera_cross_left_120fov",
+                "camera_front_wide_120fov",
+                "camera_cross_right_120fov",
+                "camera_front_tele_30fov",
+            ]
+
+        # Group clip_ids by chunk (only chunks 0..49 are local).
+        chunk_to_clips: dict[int, list[str]] = {}
+        for cid, chunk in zip(clip_index_df.index, clip_index_df["chunk"]):
+            if 0 <= int(chunk) <= 49:
+                chunk_to_clips.setdefault(int(chunk), []).append(str(cid))
+
+        bad_clips: set[str] = set()
+        for chunk, clips in chunk_to_clips.items():
+            chunk_bad = False
+            for cam in cams:
+                zp = os.path.join(local_dir, "camera", cam, f"{cam}.chunk_{chunk:04d}.zip")
+                if not os.path.exists(zp):
+                    chunk_bad = True
+                    break
+                try:
+                    with zipfile.ZipFile(zp) as zf:
+                        _ = zf.namelist()
+                except (zipfile.BadZipFile, OSError):
+                    chunk_bad = True
+                    break
+            if not chunk_bad:
+                ego_zp = os.path.join(
+                    local_dir, "labels", "egomotion", f"egomotion.chunk_{chunk:04d}.zip"
+                )
+                if not os.path.exists(ego_zp):
+                    chunk_bad = True
+                else:
+                    try:
+                        with zipfile.ZipFile(ego_zp) as zf:
+                            _ = zf.namelist()
+                    except (zipfile.BadZipFile, OSError):
+                        chunk_bad = True
+            if chunk_bad:
+                bad_clips.update(clips)
+        return bad_clips
+
     def __len__(self) -> int:
         return len(self.valid_indices)
 
@@ -183,16 +262,32 @@ class COCDataset(Dataset):
         t0_us = sample["ts"]
 
         if clip_id in self._local_clip_ids:
-            sample_data = load_physical_aiavdataset_local(
-                clip_id,
-                data_dir=self.local_dir,
-                t0_us=t0_us,
-                num_history_steps=self.num_history_steps,
-                num_future_steps=self.num_future_steps,
-                time_step=self.time_step,
-            )
+            try:
+                sample_data = load_physical_aiavdataset_local(
+                    clip_id,
+                    data_dir=self.local_dir,
+                    t0_us=t0_us,
+                    num_history_steps=self.num_history_steps,
+                    num_future_steps=self.num_future_steps,
+                    time_step=self.time_step,
+                )
+            except BadLocalZipError as e:
+                # Should have been caught at init, but zips can go bad later
+                # (NFS hiccup, etc). Surface a clean error pointing at the clip.
+                raise RuntimeError(
+                    f"Local zip unreadable for clip {clip_id} at ts={t0_us}: {e}. "
+                    f"Re-run the dataset init to refresh the bad-clip list, "
+                    f"or exclude this clip from the COC JSONL."
+                ) from e
         else:
             sample_data = self._load_from_cache(clip_id, t0_us)
+            # Cache pkl was built with include_extr_intr=True, so it carries
+            # extr/intr/vehicle_dimensions. Local path doesn't (unless the
+            # caller opted in). Strip them here so a mixed batch has a
+            # consistent field set and the collate doesn't KeyError.
+            if not self.include_extr_intr:
+                for k in ("extr", "intr", "vehicle_dimensions"):
+                    sample_data.pop(k, None)
 
         for key in list(sample_data.keys()):
             if key.startswith("ego_"):

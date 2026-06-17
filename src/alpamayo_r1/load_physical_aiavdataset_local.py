@@ -17,6 +17,15 @@ import physical_ai_av.video as video
 import physical_ai_av.egomotion as egomotion_module
 
 
+class BadLocalZipError(RuntimeError):
+    """Raised when a local PhysicalAI-AV zip is missing or corrupt.
+
+    The original zipfile.BadZipFile ("File is not a zip file") crashes the
+    DataLoader worker, which is overkill for one bad shard. Callers should
+    catch this and decide whether to skip the sample or fall back.
+    """
+
+
 def load_physical_aiavdataset_local(
     clip_id: str,
     data_dir: str | None = None,
@@ -85,8 +94,13 @@ def load_physical_aiavdataset_local(
 
     # Load egomotion data (use full egomotion, not egomotion.offline)
     egomotion_zip_path = os.path.join(data_path, "labels", "egomotion", f"egomotion.chunk_{chunk_id:04d}.zip")
-    with zipfile.ZipFile(egomotion_zip_path, 'r') as zf:
-        egomotion_df = pd.read_parquet(io.BytesIO(zf.read(f"{clip_id}.egomotion.parquet")))
+    if not os.path.exists(egomotion_zip_path):
+        raise BadLocalZipError(f"egomotion zip missing: {egomotion_zip_path}")
+    try:
+        with zipfile.ZipFile(egomotion_zip_path, 'r') as zf:
+            egomotion_df = pd.read_parquet(io.BytesIO(zf.read(f"{clip_id}.egomotion.parquet")))
+    except zipfile.BadZipFile as e:
+        raise BadLocalZipError(f"egomotion zip corrupt: {egomotion_zip_path} ({e})") from e
 
     assert t0_us > num_history_steps * time_step * 1_000_000, (
         "t0_us must be greater than the history time range"
@@ -151,23 +165,28 @@ def load_physical_aiavdataset_local(
     for cam_feature in camera_features:
         camera_zip_path = os.path.join(data_path, "camera", cam_feature, f"{cam_feature}.chunk_{chunk_id:04d}.zip")
 
-        with zipfile.ZipFile(camera_zip_path, 'r') as zf:
-            # Read video and timestamps
-            video_data = io.BytesIO(zf.read(f"{clip_id}.{cam_feature}.mp4"))
-            frame_timestamps_df = pd.read_parquet(io.BytesIO(zf.read(f"{clip_id}.{cam_feature}.timestamps.parquet")))
-            frame_timestamps = frame_timestamps_df["timestamp"].values
+        if not os.path.exists(camera_zip_path):
+            raise BadLocalZipError(f"camera zip missing: {camera_zip_path}")
+        try:
+            with zipfile.ZipFile(camera_zip_path, 'r') as zf:
+                # Read video and timestamps
+                video_data = io.BytesIO(zf.read(f"{clip_id}.{cam_feature}.mp4"))
+                frame_timestamps_df = pd.read_parquet(io.BytesIO(zf.read(f"{clip_id}.{cam_feature}.timestamps.parquet")))
+                frame_timestamps = frame_timestamps_df["timestamp"].values
 
-            # Use SeekVideoReader to decode video
-            reader = video.SeekVideoReader(
-                video_data=video_data,
-                timestamps=frame_timestamps,
-            )
+                # Use SeekVideoReader to decode video
+                reader = video.SeekVideoReader(
+                    video_data=video_data,
+                    timestamps=frame_timestamps,
+                )
 
-            # Decode frames at the requested timestamps (same as original!)
-            frames, frame_timestamps = reader.decode_images_from_timestamps(image_timestamps)
-            # Close reader to release FFmpeg decoder threads — without this,
-            # each __getitem__ leaks a thread pool (4 cameras * N threads = OOM).
-            reader.close()
+                # Decode frames at the requested timestamps (same as original!)
+                frames, frame_timestamps = reader.decode_images_from_timestamps(image_timestamps)
+                # Close reader to release FFmpeg decoder threads — without this,
+                # each __getitem__ leaks a thread pool (4 cameras * N threads = OOM).
+                reader.close()
+        except zipfile.BadZipFile as e:
+            raise BadLocalZipError(f"camera zip corrupt: {camera_zip_path} ({e})") from e
 
         frames_tensor = torch.from_numpy(frames)
         frames_tensor = rearrange(frames_tensor, "t h w c -> t c h w")
