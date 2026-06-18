@@ -220,21 +220,24 @@ transformers
 source_packages
 
 # local SFT configs
-finetune/sft/configs/sft_base_local.yaml
-finetune/sft/configs/sft_coc_base_local.yaml
 finetune/sft/configs/sft_stage1_local.yaml
 finetune/sft/configs/sft_stage2_local.yaml
+finetune/sft/configs/sft_coc_stage1_local.yaml
+finetune/sft/configs/sft_coc_stage2_local.yaml
 finetune/sft/configs/sft_stage1_qwen3vl2b_local.yaml
 finetune/sft/configs/sft_stage2_qwen3vl2b_local.yaml
 finetune/sft/configs/sft_coc_stage1_qwen3vl2b_local.yaml
 finetune/sft/configs/sft_coc_stage2_qwen3vl2b_local.yaml
+
 scripts/train_stage1_2b_local.sh
 scripts/train_stage2_2b_local.sh
-scripts/train_stage1_8b_local.sh
 scripts/train_coc_stage1_2b_local.sh
 scripts/train_coc_stage2_2b_local.sh
-scripts/eval_trajs_local.sh
 scripts/train_stage1_2b_offload_local.sh
+scripts/train_coc_stage1_local.sh
+scripts/train_coc_stage2_local.sh
+
+scripts/eval_trajs_local.sh
 scripts/eval_trajs_with_coc_local.sh
 
 /wandb/
