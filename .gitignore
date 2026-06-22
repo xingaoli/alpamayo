@@ -243,3 +243,5 @@ scripts/eval_trajs_with_coc_local.sh
 /wandb/
 finetune/sft/configs/wandb/local.yaml
 opencode.json
+
+tools/vis_sft_additional/vis_output
