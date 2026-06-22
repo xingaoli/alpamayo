@@ -6,7 +6,11 @@
 #   bash kill_gpu.sh -l           仅列出，不清理
 #   bash kill_gpu.sh -f           跳过确认直接清理
 
-set -euo pipefail
+# 注意：不使用 set -e。本脚本大量依赖 /proc、ps、fuser 等"尽力而为"的探测，
+# 被查询的进程随时可能退出，使这些命令返回非零；若开启 errexit，会在读取
+# cmdline 时静默中止，连确认提示都不弹出（表现为偶发不弹 yes/no）。
+# 改为靠下文的显式判空来容错。
+set -uo pipefail
 
 KEYWORD=""
 LIST_ONLY=false
@@ -24,6 +28,25 @@ done
 
 CURRENT_USER=$(whoami)
 
+# 排除名单：命令行匹配以下任一模式的进程永不被清理
+# （例如 sudo nohup 运行的后台 guard 脚本）
+EXCLUDE_PATTERNS=(
+    "gpu_guard.sh"
+)
+
+# 判断某个 PID 是否在排除名单中（按完整命令行子串匹配）
+is_excluded_pid() {
+    local pid=$1
+    local cmdline
+    cmdline=$(cat "/proc/$pid/cmdline" 2>/dev/null | tr '\0' ' ')
+    [ -z "$cmdline" ] && return 1
+    local pat
+    for pat in "${EXCLUDE_PATTERNS[@]}"; do
+        [[ "$cmdline" == *"$pat"* ]] && return 0
+    done
+    return 1
+}
+
 # 获取当前用户占用GPU的进程PID
 get_gpu_pids() {
     nvidia-smi --query-compute-apps=pid,name,used_gpu_memory --format=csv,noheader,nounits 2>/dev/null | \
@@ -33,6 +56,7 @@ get_gpu_pids() {
         mem=$(echo "$mem" | xargs)
         if [ -d "/proc/$pid" ]; then
             proc_user=$(ps -o user= -p "$pid" 2>/dev/null | xargs)
+            is_excluded_pid "$pid" && continue
             if [ "$proc_user" = "$CURRENT_USER" ]; then
                 if [ -z "$KEYWORD" ] || echo "$name" | grep -qi "$KEYWORD"; then
                     echo "$pid|$name|${mem}MiB"
@@ -48,7 +72,9 @@ get_fuser_pids() {
         [ -e "$dev" ] || continue
         [[ "$dev" == /dev/nvidia_uvm* || "$dev" == /dev/nvidia_modeset* || "$dev" == /dev/nvidiactl ]] && continue
         fuser "$dev" 2>/dev/null
-    done | tr -s '[:space:]' '\n' | sort -u
+    done | tr -s '[:space:]' '\n' | sort -u | while read -r p; do
+        is_excluded_pid "$p" || echo "$p"
+    done
 }
 
 # 向上追溯进程树，找到顶层父进程（同一个user下）
@@ -70,6 +96,13 @@ find_root_ancestor() {
         proc_argv0=$(cat "/proc/$ppid/cmdline" 2>/dev/null | tr '\0' '\n' | head -1)
         case "$proc_argv0" in
             -*) break ;;
+        esac
+        # 不跨越 IDE 远程会话边界（VSCode / Cursor 等）
+        # 这些会话派生的终端 shell argv[0] 仍是普通 bash（如 /usr/bin/bash --init-file .../.vscode-server/...），
+        # 无法靠 argv[0] 或 comm 识别，故用完整命令行是否含 .vscode-server / .cursor-server 路径来判断。
+        proc_fullcmd=$(cat "/proc/$ppid/cmdline" 2>/dev/null | tr '\0' ' ')
+        case "$proc_fullcmd" in
+            *.vscode-server/*|*.cursor-server/*) break ;;
         esac
         root_pid=$ppid
         pid=$ppid
@@ -114,10 +147,12 @@ if [ -z "$gpu_pids" ]; then
         echo "  PID=$p CMD=$cmdline"
         root=$(find_root_ancestor "$p")
         root_cmdline=$(cat "/proc/$root/cmdline" 2>/dev/null | tr '\0' ' ' | cut -c1-80)
-        ROOT_PIDS[$root]="$root_cmdline"
-        ALL_PIDS[$root]=1
+        if ! is_excluded_pid "$root"; then
+            ROOT_PIDS[$root]="$root_cmdline"
+            ALL_PIDS[$root]=1
+        fi
         for c in $(get_all_children "$root"); do
-            ALL_PIDS[$c]=1
+            is_excluded_pid "$c" || ALL_PIDS[$c]=1
         done
     done
     # fuser 路径下可能所有进程都被 KEYWORD 过滤掉了
@@ -136,11 +171,13 @@ if [ -n "$gpu_pids" ]; then
 
         # 收集根父进程及其所有子进程
         root_cmdline=$(cat "/proc/$root/cmdline" 2>/dev/null | tr '\0' ' ' | cut -c1-80)
-        ROOT_PIDS[$root]="$root_cmdline"
+        if ! is_excluded_pid "$root"; then
+            ROOT_PIDS[$root]="$root_cmdline"
+            ALL_PIDS[$root]=1
+        fi
 
-        ALL_PIDS[$root]=1
         for c in $(get_all_children "$root"); do
-            ALL_PIDS[$c]=1
+            is_excluded_pid "$c" || ALL_PIDS[$c]=1
         done
     done <<< "$gpu_pids"
 fi
@@ -160,6 +197,7 @@ echo "=== 关联的进程树（将被一并清理）==="
 for root in "${!ROOT_PIDS[@]}"; do
     echo "  根进程: PID=$root  ${ROOT_PIDS[$root]}"
     for c in $(get_all_children "$root" | sort -n); do
+        is_excluded_pid "$c" && continue
         c_cmd=$(cat "/proc/$c/cmdline" 2>/dev/null | tr '\0' ' ' | cut -c1-60)
         gpu_mark=""
         [ -n "${GPU_INFO[$c]+_}" ] && gpu_mark=" <-- GPU"
@@ -185,6 +223,7 @@ fi
 
 # 从根进程开始杀整棵树
 for root in "${!ROOT_PIDS[@]}"; do
+    is_excluded_pid "$root" && continue
     if kill "$root" 2>/dev/null; then
         echo "终止进程树: PID=$root"
     fi
@@ -194,6 +233,7 @@ sleep 2
 
 # 检查残留，强制清理
 for pid in "${!ALL_PIDS[@]}"; do
+    is_excluded_pid "$pid" && continue
     if [ -d "/proc/$pid" ]; then
         kill -9 "$pid" 2>/dev/null && echo "强制终止: PID=$pid"
     fi
@@ -211,6 +251,7 @@ if [ -n "$fuser_pids" ]; then
         proc_user=$(ps -o user= -p "$p" 2>/dev/null | xargs)
         [ "$proc_user" != "$CURRENT_USER" ] && continue
         cmdline=$(cat "/proc/$p/cmdline" 2>/dev/null | tr '\0' ' ' | cut -c1-80)
+        is_excluded_pid "$p" && continue
         echo "  PID=$p CMD=$cmdline"
         kill -9 "$p" 2>/dev/null && echo "  已强制终止 PID=$p"
     done
