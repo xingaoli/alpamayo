@@ -244,7 +244,7 @@ def main():
         print(f"Loaded .env from: {env_path}")
     
     data_dir = os.getenv("ALPAMAYO_DATA_DIR", 
-                         "/home/xingao/code/Alpamayo1.5/data/PhysicalAI-Autonomous-Vehicles")
+                         "/home/xingao/code/NVlabs-alpamayo/alpamayo1.5/data/PhysicalAI-Autonomous-Vehicles")
     
     parser = argparse.ArgumentParser(description="Visualize factor cluster samples")
     parser.add_argument("--input-file", type=str, 

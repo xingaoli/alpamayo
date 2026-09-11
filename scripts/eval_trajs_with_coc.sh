@@ -10,9 +10,9 @@ CHECKPOINT=${CHECKPOINT:-outputs/output_coc_stage2_2b/checkpoint-10}
 STAGE1_VLM_CKPT=${STAGE1_VLM_CKPT:-outputs/output_coc_stage1_2b/checkpoint-1000}
 COC_JSONL=${COC_JSONL:-data/coc.jsonl}
 
-cd /home/xingao/code/Alpamayo
+cd /home/xingao/code/NVlabs-alpamayo/alpamayo
 
-export PYTHONPATH=/home/xingao/code/Alpamayo
+export PYTHONPATH=/home/xingao/code/NVlabs-alpamayo/alpamayo
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1,2,3}
 
 NUM_GPUS=${NUM_GPUS:-4}

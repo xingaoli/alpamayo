@@ -1,9 +1,9 @@
 #!/bin/bash
 # Stage 1: Train VLM with discrete trajectory tokens (Qwen3-VL-2B-Instruct)
 
-cd /home/xingao/code/Alpamayo
+cd /home/xingao/code/NVlabs-alpamayo/alpamayo
 
-export PYTHONPATH=/home/xingao/code/Alpamayo
+export PYTHONPATH=/home/xingao/code/NVlabs-alpamayo/alpamayo
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1,2,3}
 
 NUM_GPUS=${NUM_GPUS:-4}

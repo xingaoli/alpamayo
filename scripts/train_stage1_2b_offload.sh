@@ -1,12 +1,12 @@
 #!/bin/bash
 # Stage 1 low-memory training with ZeRO-3 CPU offload.
 
-cd /home/xingao/code/Alpamayo
+cd /home/xingao/code/NVlabs-alpamayo/alpamayo
 
 # Load environment variables (ALPAMAYO_WORKER_NUM_THREADS etc.)
 source "$(dirname "$0")/../.env" 2>/dev/null || true
 
-export PYTHONPATH=/home/xingao/code/Alpamayo
+export PYTHONPATH=/home/xingao/code/NVlabs-alpamayo/alpamayo
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1}
 
 # Limit per-worker threads and malloc arenas to prevent memory fragmentation.
@@ -21,7 +21,7 @@ export PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:Tr
 # export PROCESS_TITLE=Stage1-2B-Offload
 
 NUM_GPUS=${NUM_GPUS:-2}
-CONFIG_PATH=/home/xingao/code/Alpamayo/finetune/sft/configs
+CONFIG_PATH=/home/xingao/code/NVlabs-alpamayo/alpamayo/finetune/sft/configs
 CONFIG_NAME=sft_stage1_qwen3vl2b
 RESUME_ARGS=()
 if [[ -n "${RESUME_FROM_CHECKPOINT:-}" ]]; then

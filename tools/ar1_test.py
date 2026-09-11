@@ -10,7 +10,7 @@
 # We use data from the NVIDIA [PhysicalAI-AV Dataset](https://huggingface.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles).
 
 import os
-os.chdir('/home/xingao/code/Alpamayo')
+os.chdir('/home/xingao/code/NVlabs-alpamayo/alpamayo')
 os.environ['CUDA_VISIBLE_DEVICES'] = "2,3"
 
 import json
